@@ -1,0 +1,503 @@
+-----------
+Apache Pig
+-----------
+
+What is pig?
+A tool to analyze data in Hadoop Ecosystem using Pig lating language. Pig Latin is used to write script to process data stored in HDFS.
+Pig converts your script written in Pig Lating in Map Reduce code and Map Reduce code executes on data stored in HDFS.
+
+Pig Components
+1) Pig Latin (Scripting Language)
+	--Can handle semi-structured, unstructued and structured data
+	--Dataflow Language
+	--Alternative of Map Reduce Jobs
+
+Steps involved in Pig Execution
+	--Parse
+	--Compile
+	--Optimize
+	--Plan
+
+Pig Data Model
+	--Atoms - Atoms are basic datatypes which are used in all programming languages
+	--Tuple - Ordered set of fields which may contain different data types for each field (1,Linkin Park, 7, California) (Row in a table)
+	--Map - key value pair used to represent data elements [band#Metallica, members#7]
+	--Bag - Bag is a collection of a set of tuples. These tuples are subset of rows or entire rows of the table
+	--Relation
+
+Pig Execution Modes (Connecting to pig)
+	--Local Mode - Data will be used from local file system. Commands will run locally
+	Command >pig -x local
+	--MapReduce Mode (HDFS Mode) - Data should be part of HDFS. Commands will run in Hadoop MapReduce
+	Command >pig -x mapreduce 
+		>pig
+
+Execution Type (How many ways we can execute pig scripts)
+	1) Interactive mode in grunt shell
+	-----------------------------------
+		grunt> airports = LOAD '/mnt/home/rishabhtiwari2048gmail/AirlineAnalysis/4_airports.csv' USING PigStorage(',');
+                grunt> dump airports;
+
+	2) Batch mode (script)
+	-----------------------------------
+		airlines = LOAD '/mnt/home/rishabhtiwari2048gmail/AirlineAnalysis/airlines.csv' USING PigStorage(',') AS (CODE:chararray,NAME:chararray);
+		dump airlines;
+		
+		pig -x local pig_local.pig
+
+Grouping and Joining
+	
+	Grouping
+	---------
+	grunt> airline = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray,NAME:chararray);
+        grunt> flight = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        grunt> flight_group_data = GROUP flight BY YEAR;
+	grunt> dump flight_group_data;
+
+	Grouping by multiple fields
+	---------------------------
+	grunt> airline = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray,NAME:chararray);
+        grunt> flight = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	grunt> flight_group_data = GROUP flight BY (SOURCE, DESTINATION);
+	grunt> dump flight_group_data;
+
+	Joining
+	-------
+	There are 3 types of joins in Pig
+	self join 
+	inner join
+	outer joins
+		left outer joins
+		right outer joins
+		full outer joins
+
+	
+	<Self Join>
+	flights1 = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        flights2 = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	flights3 = JOIN flights1 BY SOURCE, flights2 BY SOURCE
+	STORE flights3 INTO '/user/rishabhtiwari2048gmail/pig/output'
+
+	<Inner Join>		
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	airlines = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray, NAME:chararray);
+	output1 = JOIN airlines BY IATA_CODE, flights BY AIRLINE;
+	dump output1;
+
+	<left outer join>
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	airlines = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray, NAME:chararray);
+	output1 = JOIN airlines BY IATA_CODE LEFT OUTER, flights BY AIRLINE;
+	dump output1;
+	
+	<right outer join>
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	airlines = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray, NAME:chararray);
+	output1 = JOIN airlines BY IATA_CODE RIGHT, flights BY AIRLINE;
+	dump output1;	
+	
+	<full outer join>
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	airlines = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA_CODE:chararray, NAME:chararray);
+	output1 = JOIN airlines BY IATA_CODE FULL OUTER,flights BY AIRLINE;
+	dump output1;	
+
+
+Combining and Splitting
+------------------------
+
+	Combining
+	Union - Merging and combining data from relations
+	flight1 = LOAD '/user/rishabhtiwari2048gmail/pig/flight1.csv' USING PigStorage(',') AS (RECORD:int, YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	flight2 = LOAD '/user/rishabhtiwari2048gmail/pig/flight2.csv' USING PigStorage(',') AS (RECORD:int, YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	flight = UNION flight1,flight2;
+	dump flight;
+
+	
+	Splitting
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	SPLIT flights INTO flight1 if MONTH==1, flight2 if MONTH==2, flight3 if MONTH==3;
+	DUMP flight1;
+	DUMP flight2;
+	DUMP flight3;
+
+Filtering
+---------
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	losangeles_to_miami_in_AA = FILTER flights BY (AIRLINE == 'AA' AND SOURCE == 'LAX' AND DESTINATION == 'MIA');
+	dump losangeles_to_miami_in_AA;
+
+DISTINCT
+--------
+        flight1 = LOAD '/user/rishabhtiwari2048gmail/pig/flightd.csv' USING PigStorage(',') AS (RECORD:int, YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, DEPARTURE:int, ARRIVAL:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        distinct_flight1 = DISTINCT flight1;
+        DUMP distinct_flight1;
+
+FOREACH OPERATOR
+----------------
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	flight_info = FOREACH flights GENERATE AIRLINE, SOURCE, DESTINATION, DELAY;
+	dump flight_info;
+
+SORTING
+-------
+        flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        filtered_data = FILTER flights BY (AIRLINE=='AA' and SOURCE=='LAX' and DESTINATION=='MIA');
+        final_data = FOREACH filtered_data GENERATE YEAR, MONTH, DISTANCE, DELAY;
+        ordered_data = ORDER final_data BY DISTANCE DESC ,DELAY ASC;
+        dump ordered_data;
+
+
+LIMIT
+-----
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        filtered_data = FILTER flights BY (AIRLINE=='AA' and SOURCE=='LAX' and DESTINATION=='MIA');
+        final_data = FOREACH filtered_data GENERATE YEAR, MONTH, DISTANCE, DELAY;
+        ordered_data = ORDER final_data BY DISTANCE DESC ,DELAY ASC;
+        limited_data = LIMIT ordered_data 10;
+        dump limited_data;	
+
+BUILT IN Functions
+-------------------
+	Evaluation Functions
+	--------------------
+
+	flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	grouped_data = GROUP flights ALL;
+
+Note: function names are case sensitive
+	AVG()
+	flight_distance_avg = FOREACH grouped_data GENERATE (flights.AIRLINE), AVG(flights.DISTANCE);
+	MAX()
+	flight_distance_min = FOREACH grouped_data GENERATE flights.AIRLINE, MAX(flights.DISTANCE);
+	MIN()
+	flight_distance_min = FOREACH grouped_data GENERATE flights.AIRLINE, MIN(flights.DISTANCE);
+	COUNT()
+	flight_distance_min = FOREACH grouped_data GENERATE flights.AIRLINE, COUNT(flights.DISTANCE);
+	
+	SUM()
+        flights = LOAD '/user/rishabhtiwari2048gmail/pig/flights.csv' USING PigStorage(',') AS (YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        required_info = FOREACH flights GENERATE AIRLINE, DIVERTED, CANCELED;
+        grouped_data = GROUP required_info ALL;
+        final_output = FOREACH grouped_data GENERATE required_info.AIRLINE, SUM(required_info.DIVERTED), SUM(required_info.CANCELED);
+        dump final_output;
+
+	DIFF() and SUBSTRACT()
+	A = [1,2,3,4] 
+	B = [3,4,6,8]
+	
+	A DIFF B = [1,2,6,8]
+	A SUBSTRACT B = [1,2]
+	B SUBSTRACT A = [6,8]
+		
+	GROUP - Groups the data in same relation
+	COGROUP - Groups the data in two or more relation
+	
+	flight1 = LOAD '/user/rishabhtiwari2048gmail/pig/flight1.csv' USING PigStorage(',') AS (RECORD:int, YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+        flight2 = LOAD '/user/rishabhtiwari2048gmail/pig/flight2.csv' USING PigStorage(',') AS (RECORD:int, YEAR:int, MONTH:int, AIRLINE:chararray, DISTANCE:int, SOURCE:chararray, DESTINATION:chararray, ARRIVAL:int, DEPARTURE:int, DELAY:int, DIVERTED:int, CANCELED:int);
+	grouped_data = COGROUP flight1 BY RECORD, flight2 BY RECORD;
+	diff_data = FOREACH grouped_data GENERATE DIFF(flight1,flight2);
+	
+	---------
+	OUTPUT
+	---------
+	({(1,2015,1,AS,98,ANC,SEA,1448,408,-22,0,0)})
+        ({(2,2015,1,AA,2336,LAX,PBI,2330,741,-9,0,0)})
+	({})
+	({})
+	({(5,2015,1,AS,135,SEA,ANC,1448,259,-21,0,0)})
+	({(6,2015,1,DL,806,SFO,MSP,1589,610,8,0,0)})
+	({})
+	({(8,2015,1,US,2013,LAX,CLT,2125,753,-10,0,0)})
+	({(9,2015,1,AA,1112,SFO,DFW,1464,532,-13,0,0)})
+	({})
+	({(11,2015,1,DL,2336,DEN,ATL,1199,453,-30,0,0)})
+	({(12,2015,1,DL,2440,SEA,MSP,1399,557,8,0,0)})
+	({})
+	({})
+	({(15,2015,1,UA,1197,SFO,IAH,1635,619,-7,0,0)})
+	({(16,2015,1,AS,122,ANC,PDX,1542,507,-18,0,0)})
+
+	substract_data = FOREACH grouped_data GENERATE SUBTRACT(flight1,flight2);
+
+	----------
+	OUTPUT
+	----------
+
+	({(1,2015,1,AS,98,ANC,SEA,1448,408,-22,0,0)})
+	({(2,2015,1,AA,2336,LAX,PBI,2330,741,-9,0,0)})
+	({})
+	({})
+	({(5,2015,1,AS,135,SEA,ANC,1448,259,-21,0,0)})
+	({(6,2015,1,DL,806,SFO,MSP,1589,610,8,0,0)})
+	({})
+	({(8,2015,1,US,2013,LAX,CLT,2125,753,-10,0,0)})
+	({(9,2015,1,AA,1112,SFO,DFW,1464,532,-13,0,0)})
+	({})
+	({(11,2015,1,DL,2336,DEN,ATL,1199,453,-30,0,0)})
+	({})
+	({})
+	({})
+	({})
+	({})
+
+	substract_data2 = FOREACH grouped_data GENERATE SUBTRACT(flight2,flight1);
+
+	----------
+	OUTPUT
+	----------
+
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({})
+	({(12,2015,1,DL,2440,SEA,MSP,1399,557,8,0,0)})
+	({})
+	({})
+	({(15,2015,1,UA,1197,SFO,IAH,1635,619,-7,0,0)})
+	({(16,2015,1,AS,122,ANC,PDX,1542,507,-18,0,0)})	
+
+
+STRING
+------
+	data = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA:chararray, NAME:chararray);
+        dump data;
+
+	ENDSWITH
+	--------
+	airline_endswith_co = FOREACH data GENERATE (IATA, NAME), ENDSWITH(NAME,'Co.');
+
+	((UA,United Air Lines Inc.),false)
+	((AA,American Airlines Inc.),false)
+	((US,US Airways Inc.),false)
+	((F9,Frontier Airlines Inc.),false)
+	((B6,JetBlue Airways),false)
+	((OO,Skywest Airlines Inc.),false)
+	((AS,Alaska Airlines Inc.),false)
+	((NK,Spirit Air Lines),false)
+	((WN,Southwest Airlines Co.),true)
+	((DL,Delta Air Lines Inc.),false)
+	((EV,Atlantic Southeast Airlines),false)
+	((HA,Hawaiian Airlines Inc.),false)
+	((MQ,American Eagle Airlines Inc.),false)
+	((VX,Virgin America),false)
+
+	STARTSWITH
+	----------
+	airline_startswith_co = FOREACH data GENERATE (IATA, NAME), STARTSWITH(NAME,'S.');
+	
+	((UA,United Air Lines Inc.),false)
+	((AA,American Airlines Inc.),false)
+	((US,US Airways Inc.),false)
+	((F9,Frontier Airlines Inc.),false)
+	((B6,JetBlue Airways),false)
+	((OO,Skywest Airlines Inc.),true)
+	((AS,Alaska Airlines Inc.),false)
+	((NK,Spirit Air Lines),true)
+	((WN,Southwest Airlines Co.),true)
+	((DL,Delta Air Lines Inc.),false)
+	((EV,Atlantic Southeast Airlines),false)
+	((HA,Hawaiian Airlines Inc.),false)
+	((MQ,American Eagle Airlines Inc.),false)
+	((VX,Virgin America),false)
+
+	SUBSTRING
+	---------
+	airline_substring_co = FOREACH data GENERATE (IATA, NAME), SUBSTRING(NAME,0,10);
+	
+	((UA,United Air Lines Inc.),United Air)
+	((AA,American Airlines Inc.),American A)
+	((US,US Airways Inc.),US Airways)
+	((F9,Frontier Airlines Inc.),Frontier A)
+	((B6,JetBlue Airways),JetBlue Ai)
+	((OO,Skywest Airlines Inc.),Skywest Ai)
+	((AS,Alaska Airlines Inc.),Alaska Air)
+	((NK,Spirit Air Lines),Spirit Air)
+	((WN,Southwest Airlines Co.),Southwest )
+	((DL,Delta Air Lines Inc.),Delta Air )
+	((EV,Atlantic Southeast Airlines),Atlantic S)
+	((HA,Hawaiian Airlines Inc.),Hawaiian A)
+	((MQ,American Eagle Airlines Inc.),American E)
+	((VX,Virgin America),Virgin Ame)
+
+	EqualsIgnoreCase
+	----------------
+	airline_eic_co = FOREACH data GENERATE (IATA, NAME), EqualsIgnoreCase(NAME,'United Air Lines Inc.');
+
+	((UA,United Air Lines Inc.),true)
+	((AA,American Airlines Inc.),false)
+	((US,US Airways Inc.),false)
+	((F9,Frontier Airlines Inc.),false)
+	((B6,JetBlue Airways),false)
+	((OO,Skywest Airlines Inc.),false)
+	((AS,Alaska Airlines Inc.),false)
+	((NK,Spirit Air Lines),false)
+	((WN,Southwest Airlines Co.),false)
+	((DL,Delta Air Lines Inc.),false)
+	((EV,Atlantic Southeast Airlines),false)
+	((HA,Hawaiian Airlines Inc.),false)
+	((MQ,American Eagle Airlines Inc.),false)
+	((VX,Virgin America),false)
+
+	UPPER
+	-----
+	airline_upper_co = FOREACH data GENERATE (IATA, NAME), UPPER(NAME);
+
+	((UA,United Air Lines Inc.),UNITED AIR LINES INC.)
+	((AA,American Airlines Inc.),AMERICAN AIRLINES INC.)
+	((US,US Airways Inc.),US AIRWAYS INC.)
+	((F9,Frontier Airlines Inc.),FRONTIER AIRLINES INC.)
+	((B6,JetBlue Airways),JETBLUE AIRWAYS)
+	((OO,Skywest Airlines Inc.),SKYWEST AIRLINES INC.)
+	((AS,Alaska Airlines Inc.),ALASKA AIRLINES INC.)
+	((NK,Spirit Air Lines),SPIRIT AIR LINES)
+	((WN,Southwest Airlines Co.),SOUTHWEST AIRLINES CO.)
+	((DL,Delta Air Lines Inc.),DELTA AIR LINES INC.)
+	((EV,Atlantic Southeast Airlines),ATLANTIC SOUTHEAST AIRLINES)
+	((HA,Hawaiian Airlines Inc.),HAWAIIAN AIRLINES INC.)
+	((MQ,American Eagle Airlines Inc.),AMERICAN EAGLE AIRLINES INC.)
+	((VX,Virgin America),VIRGIN AMERICA)
+
+	LOWER
+	-----
+	airline_lower_co = FOREACH data GENERATE (IATA, NAME), LOWER(NAME);
+
+	((UA,United Air Lines Inc.),united air lines inc.)
+	((AA,American Airlines Inc.),american airlines inc.)
+	((US,US Airways Inc.),us airways inc.)
+	((F9,Frontier Airlines Inc.),frontier airlines inc.)
+	((B6,JetBlue Airways),jetblue airways)
+	((OO,Skywest Airlines Inc.),skywest airlines inc.)
+	((AS,Alaska Airlines Inc.),alaska airlines inc.)
+	((NK,Spirit Air Lines),spirit air lines)
+	((WN,Southwest Airlines Co.),southwest airlines co.)
+	((DL,Delta Air Lines Inc.),delta air lines inc.)
+	((EV,Atlantic Southeast Airlines),atlantic southeast airlines)
+	((HA,Hawaiian Airlines Inc.),hawaiian airlines inc.)
+	((MQ,American Eagle Airlines Inc.),american eagle airlines inc.)
+	((VX,Virgin America),virgin america)
+
+	REPLACE
+	-------
+	airline_replace_co = FOREACH data GENERATE (IATA, NAME), REPLACE(NAME, 'Inc.','DUMMY');
+	
+	((UA,United Air Lines Inc.),United Air Lines DUMMY)
+	((AA,American Airlines Inc.),American Airlines DUMMY)
+	((US,US Airways Inc.),US Airways DUMMY)
+	((F9,Frontier Airlines Inc.),Frontier Airlines DUMMY)
+	((B6,JetBlue Airways),JetBlue Airways)
+	((OO,Skywest Airlines Inc.),Skywest Airlines DUMMY)
+	((AS,Alaska Airlines Inc.),Alaska Airlines DUMMY)
+	((NK,Spirit Air Lines),Spirit Air Lines)
+	((WN,Southwest Airlines Co.),Southwest Airlines Co.)
+	((DL,Delta Air Lines Inc.),Delta Air Lines DUMMY)
+	((EV,Atlantic Southeast Airlines),Atlantic Southeast Airlines)
+	((HA,Hawaiian Airlines Inc.),Hawaiian Airlines DUMMY)
+	((MQ,American Eagle Airlines Inc.),American Eagle Airlines DUMMY)
+	((VX,Virgin America),Virgin America)
+
+	TRIM
+	----
+	
+	airline_trim_co = FOREACH data GENERATE (IATA, NAME), TRIM(NAME);
+
+	((UA, United Air Lines Inc. ),United Air Lines Inc.)
+	((AA, American Airlines Inc. ),American Airlines Inc.)
+	((US, US Airways Inc. ),US Airways Inc.)
+	((F9, Frontier Airlines Inc. ),Frontier Airlines Inc.)
+	((B6, JetBlue Airways ),JetBlue Airways)
+	((OO, Skywest Airlines Inc. ),Skywest Airlines Inc.)
+	((AS, Alaska Airlines Inc. ),Alaska Airlines Inc.)
+	((NK, Spirit Air Lines ),Spirit Air Lines)
+	((WN, Southwest Airlines Co. ),Southwest Airlines Co.)
+	((DL, Delta Air Lines Inc. ),Delta Air Lines Inc.)
+	((EV, Atlantic Southeast Airlines ),Atlantic Southeast Airlines)
+	((HA, Hawaiian Airlines Inc. ),Hawaiian Airlines Inc.)
+	((MQ, American Eagle Airlines Inc. ),American Eagle Airlines Inc.)
+	((VX, Virgin America),Virgin America)
+
+	airline_rtrim_co = FOREACH data GENERATE (IATA, NAME), RTRIM(NAME);
+
+	((UA, United Air Lines Inc. ), United Air Lines Inc.)
+	((AA, American Airlines Inc. ), American Airlines Inc.)
+	((US, US Airways Inc. ), US Airways Inc.)
+	((F9, Frontier Airlines Inc. ), Frontier Airlines Inc.)
+	((B6, JetBlue Airways ), JetBlue Airways)
+	((OO, Skywest Airlines Inc. ), Skywest Airlines Inc.)
+	((AS, Alaska Airlines Inc. ), Alaska Airlines Inc.)
+	((NK, Spirit Air Lines ), Spirit Air Lines)
+	((WN, Southwest Airlines Co. ), Southwest Airlines Co.)
+	((DL, Delta Air Lines Inc. ), Delta Air Lines Inc.)
+	((EV, Atlantic Southeast Airlines ), Atlantic Southeast Airlines)
+	((HA, Hawaiian Airlines Inc. ), Hawaiian Airlines Inc.)
+	((MQ, American Eagle Airlines Inc. ), American Eagle Airlines Inc.)
+	((VX, Virgin America), Virgin America)
+
+	airline_ltrim_co = FOREACH data GENERATE (IATA, NAME), LTRIM(NAME);
+
+	((UA, United Air Lines Inc. ),United Air Lines Inc. )
+	((AA, American Airlines Inc. ),American Airlines Inc. )
+	((US, US Airways Inc. ),US Airways Inc. )
+	((F9, Frontier Airlines Inc. ),Frontier Airlines Inc. )
+	((B6, JetBlue Airways ),JetBlue Airways )
+	((OO, Skywest Airlines Inc. ),Skywest Airlines Inc. )
+	((AS, Alaska Airlines Inc. ),Alaska Airlines Inc. )
+	((NK, Spirit Air Lines ),Spirit Air Lines )
+	((WN, Southwest Airlines Co. ),Southwest Airlines Co. )
+	((DL, Delta Air Lines Inc. ),Delta Air Lines Inc. )
+	((EV, Atlantic Southeast Airlines ),Atlantic Southeast Airlines )
+	((HA, Hawaiian Airlines Inc. ),Hawaiian Airlines Inc. )
+	((MQ, American Eagle Airlines Inc. ),American Eagle Airlines Inc. )
+	((VX, Virgin America),Virgin America)
+
+Pig UDF
+--------
+	UDFs are created in JAVA, PYTHON and deployed by Developer
+	1) Create new java project in Eclipse
+	2) Implement UDF in Java
+	3) Create JAR file
+	4) Copy JAR file in local path
+	5) Register jar file
+	6) Define UDF
+	7) Use UDF
+
+	USING Python
+	
+	def myfirstpigfunc(p_name):
+        x = str(p_name).upper()
+        return x
+
+	---REGISTER
+	REGISTER 'simpleUDF.py' USING jython as my_special_udfs
+
+	airline = LOAD '/user/rishabhtiwari2048gmail/pig/airlines.csv' USING PigStorage(',') AS (IATA:chararray, NAME:chararray);
+        data = FOREACH airline GENERATE NAME;
+	final_output = FOREACH data GENERATE NAME, my_special_udfs.myfirstpigfunc(NAME);
+	DUMP final_output;
+
+	( United Air Lines Inc. , UNITED AIR LINES INC. )
+	( American Airlines Inc. , AMERICAN AIRLINES INC. )
+	( US Airways Inc. , US AIRWAYS INC. )
+	( Frontier Airlines Inc. , FRONTIER AIRLINES INC. )
+	( JetBlue Airways , JETBLUE AIRWAYS )
+	( Skywest Airlines Inc. , SKYWEST AIRLINES INC. )
+	( Alaska Airlines Inc. , ALASKA AIRLINES INC. )
+	( Spirit Air Lines , SPIRIT AIR LINES )
+	( Southwest Airlines Co. , SOUTHWEST AIRLINES CO. )
+	( Delta Air Lines Inc. , DELTA AIR LINES INC. )
+	( Atlantic Southeast Airlines , ATLANTIC SOUTHEAST AIRLINES )
+	( Hawaiian Airlines Inc. , HAWAIIAN AIRLINES INC. )
+	( American Eagle Airlines Inc. , AMERICAN EAGLE AIRLINES INC. )
+	( Virgin America, VIRGIN AMERICA)
+
+	
+
+	
+	
